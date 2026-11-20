@@ -14,6 +14,7 @@ All notable changes to SubZones-WoW-Forever. The format follows
 
 ### Changed
 
+- `extract_game.py` picks the installed product itself: `wowf` (live WoW: Forever) first, then `wow_classic_beta`. New `tools/extract_forever.cmd` runs it on the Windows PC with the game and pushes only `tools/data/game_areas.json`, so the borders can be rebuilt from it here.
 - `/subzones debug` also reports the minimap (size, screen position, scale, shape setting and the shape minimap addons report, zoom, lines drawn) and the world map layer the overlay is on.
 - `tools/install_beta.cmd` is replaced by `tools/install_forever.cmd`, the same install script as the other Forever addons. It installs into the live `_forever_` client by default (`WOW` at the top), runs from a temporary copy so a pull can update it, explains how to recover when GitHub's history was rewritten, marks builds with uncommitted changes `-dirty`, packs `SUBZONES-<version>.zip` on the desktop and says when the game needs a full restart instead of `/reload`.
 

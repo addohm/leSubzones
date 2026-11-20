@@ -104,6 +104,18 @@ def name_hash(path):
 
 # --- Storage ------------------------------------------------------------------
 
+def installed_products(wow_dir):
+    """{product: version} for every active product in the install's .build.info."""
+    lines = (Path(wow_dir) / ".build.info").read_text(encoding="utf-8").splitlines()
+    header = [h.split("!")[0] for h in lines[0].split("|")]
+    products = {}
+    for line in lines[1:]:
+        row = dict(zip(header, line.split("|")))
+        if row.get("Active") == "1" and row.get("Product"):
+            products[row["Product"]] = row.get("Version", "")
+    return products
+
+
 def _read_config(path):
     config = {}
     for line in Path(path).read_text(encoding="utf-8").splitlines():

@@ -40,12 +40,16 @@ To roll back, check out the previous commit's `SUBZONES/` folder and copy it in 
 
 Requires Python 3. Pillow is needed only for `compare.py`'s images.
 
+The easy way, on the Windows PC with the game: run `tools\extract_forever.cmd` from a terminal. It pulls, downloads wowforevermap.com's subzones if they're missing (used only to recognise Zephras Isle), runs `extract_game.py` against the installed client, then commits and pushes only `tools/data/game_areas.json` (about 2 MB; plain git, no LFS needed). `build_borders.py` is then run from that file, anywhere, and the new `SubzoneBorders.lua` committed. `WOWROOT` at the top of the script is the World of Warcraft folder itself, not `_forever_`. Pushing needs a GitHub login with write access on that PC.
+
+By hand:
+
 ```
 python tools/extract_game.py      # reads the installed client; fetches missing files from Blizzard's CDN
 python tools/build_borders.py     # writes SUBZONES/SubzoneBorders.lua
 ```
 
-The first extraction takes about 6 minutes. CDN downloads are cached in `tools/cache/`, which isn't committed. Use `--product` to pick a different install, and `--wdt ID=FDID` for a continent that isn't identified automatically.
+The first extraction takes about 6 minutes. CDN downloads are cached in `tools/cache/`, which isn't committed. The product is picked from `.build.info`: `wowf` (live WoW: Forever), else `wow_classic_beta`. Use `--product` to pick another, and `--wdt ID=FDID` for a continent that isn't identified automatically.
 
 To re-run the comparison, first download the site's data to `tools/data/subzones.json` (also not committed):
 

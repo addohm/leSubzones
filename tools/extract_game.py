@@ -11,7 +11,11 @@ Continent WDTs: Eastern Kingdoms and Kalimdor are known. Other continents are
 found by scanning for WDT-sized files and matched to a continent ID by tile
 overlap with tools/data/subzones.json, or given explicitly with --wdt.
 
+The install's product is picked automatically: WoW: Forever (wowf), else its
+beta (wow_classic_beta). Use --product to choose another.
+
     python extract_game.py
+    python extract_game.py --product wow_classic_beta
     python extract_game.py --wdt 2991=7198644
 """
 
@@ -23,12 +27,13 @@ import time
 from collections import Counter
 from pathlib import Path
 
-from casc import Casc, CascError
+from casc import Casc, CascError, installed_products
 
 ROOT = Path(__file__).resolve().parent
 DEFAULT_OUT = ROOT / "data" / "game_areas.json"
 DEFAULT_SITE = ROOT / "data" / "subzones.json"
 KNOWN_WDTS = {0: 775971, 1: 782779}  # Azeroth (Eastern Kingdoms), Kalimdor
+PRODUCTS = ("wowf", "wow_classic_beta")  # live WoW: Forever first, then its beta
 TILE = 1600 / 3
 WDT_SIZE_RANGE = (294000, 296000)
 
@@ -111,10 +116,19 @@ def site_tiles(site_path):
     return coverage
 
 
+def pick_product(wow_dir):
+    products = installed_products(wow_dir)
+    for product in PRODUCTS:
+        if product in products:
+            return product
+    found = ", ".join(f"{p} {v}" for p, v in sorted(products.items())) or "none"
+    raise SystemExit(f"no WoW: Forever install in {wow_dir} (installed: {found}); use --product")
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--wow-dir", default=r"C:\Program Files (x86)\World of Warcraft")
-    parser.add_argument("--product", default="wow_classic_beta")
+    parser.add_argument("--product", default="auto", help="auto, wowf, wow_classic_beta, ...")
     parser.add_argument("--wdt", action="append", default=[], metavar="CONTINENT=FDID",
                         help="add or override a continent's WDT fileDataID")
     parser.add_argument("--site", type=Path, default=DEFAULT_SITE, help="used only to identify unknown continents")
@@ -122,8 +136,9 @@ def main():
     args = parser.parse_args()
 
     started = time.time()
-    storage = Casc(args.wow_dir, args.product, log=log)
-    log(f"build {storage.version}: {len(storage.by_fdid)} files")
+    product = pick_product(args.wow_dir) if args.product == "auto" else args.product
+    storage = Casc(args.wow_dir, product, log=log)
+    log(f"{product} build {storage.version}: {len(storage.by_fdid)} files")
 
     wdts = dict(KNOWN_WDTS)
     for spec in args.wdt:

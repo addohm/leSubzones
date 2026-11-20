@@ -28,7 +28,8 @@ python tools/build_borders.py
 ```
 
 Then commit, push and run `tools\install_forever.cmd` (or copy `SUBZONES/` into `Interface/AddOns/`). Useful options:
-- `extract_game.py --product`: pick a different install, for example `wow_classic`.
+- `tools\extract_forever.cmd` (Windows): runs the extraction against your installed client and pushes only `tools/data/game_areas.json`, so the borders can be rebuilt elsewhere.
+- `extract_game.py --product`: pick a different install. By default it's `wowf` (live WoW: Forever), else `wow_classic_beta`.
 - `extract_game.py --wdt ID=FDID`: add a continent that couldn't be identified automatically.
 - `build_borders.py --raw`: keep the exact chunk staircase.
 
@@ -50,6 +51,7 @@ This compares the site's subzones (`tools/data/subzones.json`) with the game, ch
 | `build_borders.py` | Area grid → `SUBZONES/SubzoneBorders.lua` |
 | `borders.py` | Shared geometry: grid → border lines, smoothing, Lua output |
 | `compare.py` | Site vs game report |
+| `extract_forever.cmd` | Windows: extract the terrain areas from the installed client and push `data/game_areas.json` |
 | `install_forever.cmd` | Windows: pull from GitHub, install the addon into the Forever client, pack a zip on the desktop |
 | `package.py` | Addon → `releases/SUBZONES-<version>.zip` for CurseForge / Wago |
 
