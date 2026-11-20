@@ -10,7 +10,7 @@ SUBZONES is a client-side WoW addon. There's no server: "deploying" means copyin
 
    To install by hand instead, copy the `SUBZONES` folder (not the repo root) into `<WoW>\_forever_\Interface\AddOns\`.
 
-4. Check it on a zone map: `/subzones debug` reports the subzone count, data source, version and build (the commit the script installed, or `release` for a zip install).
+4. Check it on a zone map: `/subzones debug` reports the subzone count, data source, the minimap's size and shape, the map layer, version and build (the commit the script installed, or `release` for a zip install).
 
 Only `SUBZONES.toc`, `Build.lua`, `SUBZONES.lua`, `SubzoneBorders.lua` and `icon.tga` are needed. Everything in `tools/` is for regenerating data.
 

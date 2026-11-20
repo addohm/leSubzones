@@ -56,7 +56,17 @@ local DEFAULTS = {
 	lineColor = { 1, 0.95, 0.8, 0.95 },
 }
 
+-- The overlay's own slot in the world map's pin frame levels. Map art addons
+-- such as OpenMap insert their art just above Blizzard's exploration layer, so
+-- the slot goes above a later layer: over all map art, under the icons.
+local LAYER = "PIN_FRAME_LEVEL_SUBZONES"
+local LAYER_ANCHORS = {
+	"PIN_FRAME_LEVEL_FOG_OF_WAR", "PIN_FRAME_LEVEL_EVENT_OVERLAY",
+	"PIN_FRAME_LEVEL_MAP_HIGHLIGHT", "PIN_FRAME_LEVEL_MAP_EXPLORATION",
+}
+
 local db
+local layerAnchor -- the layer ours went above, or nil when it couldn't be added
 local provider
 local overlay -- frame on the map canvas holding all fills, lines and labels
 local settingsCategory
@@ -537,13 +547,16 @@ local function DrawOverlay()
 	local layer = (C_Map.GetMapArtLayers(mapID) or {})[1]
 	overlay.scale = layer and width / layer.layerWidth or 1
 
-	-- Just above Blizzard's exploration layer, under every other pin.
+	-- Read every draw: other addons inserting layers later shift ours up.
 	local levels = WorldMapFrame.GetPinFrameLevelsManager and WorldMapFrame:GetPinFrameLevelsManager()
 	local ok, level = false, nil
-	if levels then
+	if levels and layerAnchor then
+		ok, level = pcall(levels.GetValidFrameLevel, levels, LAYER)
+	elseif levels then
 		ok, level = pcall(levels.GetValidFrameLevel, levels, "PIN_FRAME_LEVEL_MAP_EXPLORATION")
+		level = ok and level and level + 1
 	end
-	overlay:SetFrameLevel(ok and level and level + 1 or canvas:GetFrameLevel() + 1)
+	overlay:SetFrameLevel(ok and level or canvas:GetFrameLevel() + 1)
 
 	local visible = VisibleAreas(mapID, context)
 	if db.mode ~= "lines" then
@@ -976,8 +989,21 @@ local function CreateToggle()
 	check:SetScript("OnLeave", GameTooltip_Hide)
 end
 
+local function RegisterLayer()
+	local levels = WorldMapFrame.GetPinFrameLevelsManager and WorldMapFrame:GetPinFrameLevelsManager()
+	if not (levels and levels.InsertFrameLevelAbove) then return end
+	for _, anchor in ipairs(LAYER_ANCHORS) do
+		local ok, added = pcall(levels.InsertFrameLevelAbove, levels, LAYER, anchor)
+		if ok and added then
+			layerAnchor = anchor
+			return
+		end
+	end
+end
+
 local function Install()
 	if overlay or not db or not WorldMapFrame or not MapCanvasDataProviderMixin then return end
+	RegisterLayer()
 
 	local canvas = WorldMapFrame:GetCanvas()
 	overlay = CreateFrame("Frame", nil, canvas)
@@ -1001,7 +1027,7 @@ end
 
 -- Slash commands -----------------------------------------------------------------
 
-local function PrintDebug()
+local function PrintMapDebug()
 	local mapID = (WorldMapFrame and WorldMapFrame:IsShown() and WorldMapFrame:GetMapID())
 		or C_Map.GetBestMapForUnit("player")
 	if not mapID then
@@ -1023,6 +1049,31 @@ local function PrintDebug()
 	local first = context.members[1]
 	if first then
 		Print(("%s label at %.3f, %.3f (should be within 0-1)"):format(AreaName(first.id) or first.id, first.u, first.v))
+	end
+end
+
+-- What the minimap drawing is based on, to compare with a screenshot: the
+-- frame's size and screen rect, and the shape reported by minimap addons.
+local function PrintMinimapDebug()
+	if not Minimap then
+		Print("minimap: none")
+		return
+	end
+	local left, bottom, width, height = Minimap:GetRect()
+	local reported = GetMinimapShape and tostring(GetMinimapShape()) or "not defined"
+	Print(("minimap %.0fx%.0f at %.0f,%.0f, scale %.2f (effective %.2f) | shape %s, reported %s | range %d%%")
+		:format(width or 0, height or 0, left or 0, bottom or 0, Minimap:GetScale(), Minimap:GetEffectiveScale(),
+			db.minimapShape, reported, db.minimapRange * 100 + 0.5))
+	Print(("minimap zoom %d, %s | %d lines drawn"):format(Minimap:GetZoom() or 0,
+		IsIndoors and IsIndoors() and "indoors" or "outdoors", minimapFrame and minimapFrame.lines.used or 0))
+end
+
+local function PrintDebug()
+	PrintMapDebug()
+	PrintMinimapDebug()
+	if overlay then
+		Print(("map layer: %s, frame level %d"):format(layerAnchor and "above " .. layerAnchor:gsub("^PIN_FRAME_LEVEL_", "")
+			or "fallback", overlay:GetFrameLevel()))
 	end
 	local version = C_AddOns and C_AddOns.GetAddOnMetadata(ADDON_NAME, "Version") or "?"
 	Print("installed", overlay and "yes" or "no", "| interface", (select(4, GetBuildInfo())),

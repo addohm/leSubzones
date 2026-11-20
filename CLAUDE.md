@@ -46,7 +46,7 @@ WoW addon for **WoW Forever** (client "Camelot", product `wow_classic_beta`, TOC
 - Never draw on continent or world maps (`mapType < Zone`). Drawing a whole continent's borders froze and crashed the client. Keep the `MAX_SUBZONES_PER_MAP` cap.
 - The zone-level area is dropped by name match with the map name, or else by being more than 35% of the map's chunks.
 - `Blizzard_MapCanvas` is load-on-demand: no XML templates inheriting `MapCanvasPinTemplate`, and touch `MapCanvasDataProviderMixin` only in `Install()`.
-- The world-map overlay is a plain frame on `WorldMapFrame:GetCanvas()` plus a data provider. Fills are `SetColorTexture` quads shaped with `SetVertexOffset` (trapezoid decomposition).
+- The world-map overlay is a plain frame on `WorldMapFrame:GetCanvas()` plus a data provider. Its frame level comes from its own pin frame level, `PIN_FRAME_LEVEL_SUBZONES`, inserted above `FOG_OF_WAR` (fallbacks after it), re-read on every draw. OpenMap inserts 80 levels of map art just above `MAP_EXPLORATION`; the old "exploration + 1" level put the lines under it. Fills are `SetColorTexture` quads shaped with `SetVertexOffset` (trapezoid decomposition).
 - Lua 5.1: a multi-return call that isn't the last argument is truncated to one value (`f(g(), 0)`).
 
 ## Conventions

@@ -14,10 +14,12 @@ All notable changes to SubZones-WoW-Forever. The format follows
 
 ### Changed
 
+- `/subzones debug` also reports the minimap (size, screen position, scale, shape setting and the shape minimap addons report, zoom, lines drawn) and the world map layer the overlay is on.
 - `tools/install_beta.cmd` is replaced by `tools/install_forever.cmd`, the same install script as the other Forever addons. It installs into the live `_forever_` client by default (`WOW` at the top), runs from a temporary copy so a pull can update it, explains how to recover when GitHub's history was rewritten, marks builds with uncommitted changes `-dirty`, packs `SUBZONES-<version>.zip` on the desktop and says when the game needs a full restart instead of `/reload`.
 
 ### Fixed
 
+- With map art addons such as OpenMap, the borders and names were hidden under the map art. SUBZONES now adds its own layer to the world map's pin frame levels, above all map art and below the icons.
 - The minimap now redraws when a minimap addon changes its reported shape.
 
 ## [1.0.0] - 2026-10-23
