@@ -1,4 +1,4 @@
--- SUBZONES: subzone borders, names and optional color fills on the world map.
+-- leSubZones: subzone borders, names and optional color fills on the world map.
 --
 -- SubzoneBorders.lua holds, per continent, every terrain area's label point
 -- and the border polylines between areas, extracted from the game's own
@@ -12,7 +12,7 @@
 -- touches its mixins until the world map has loaded (see Install).
 
 local ADDON_NAME, ns = ...
-local TITLE = "SUBZONES"
+local TITLE = "leSubZones"
 
 local GOLDEN_RATIO = 0.618033988749895
 local MIN_NEIGHBOUR_HUE_GAP = 0.12 -- subzones that share a border get clearly different hues
@@ -882,7 +882,7 @@ local function Refresh()
 	RequestMinimapRedraw()
 end
 
--- Options panel (Settings > AddOns > SUBZONES) ----------------------------------------
+-- Options panel (Settings > AddOns > leSubZones) ----------------------------------------
 
 local function OpenSettings()
 	if settingsCategory and Settings and Settings.OpenToCategory then
@@ -1141,7 +1141,7 @@ local function PrintMinimapDebug()
 		:format(Minimap:GetZoom() or 0, IsIndoors and IsIndoors() and "indoors" or "outdoors",
 			cropLeft, cropRight, cropTop, cropBottom, db.minimapEdge, minimapFrame and minimapFrame.lines.used or 0))
 	Print("minimap mask:", minimapMaskTexture and (tostring(minimapMaskTexture) .. (minimapMask and ", on the lines" or ""))
-		or "not seen (set before SUBZONES loaded, or never changed)")
+		or "not seen (set before leSubZones loaded, or never changed)")
 end
 
 local function PrintDebug()

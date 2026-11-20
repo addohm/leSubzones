@@ -1,23 +1,23 @@
-# SUBZONES
+# leSubZones
 
 WoW addon for **WoW Forever** (client "Camelot", product `wowf` (live; the beta is `wow_classic_beta`), TOC `16001`, modern Midnight-style API) that draws subzone borders, names and optional color fills on the world map and minimap. Borders come from the game's own terrain files, extracted offline by the Python tools. See `README.md` for user-facing docs.
 
 ## Layout
 
-- `SUBZONES/`: the addon, which is what gets installed.
-  - `SUBZONES.lua`: all runtime code.
+- `leSubZones/`: the addon, which is what gets installed. Renamed from `SUBZONES` (repo was SubZones-WoW-Forever); the internal names stayed: `SubzonesDB`, `SubzonesMapToggle`, `/subzones` + `/sz`, `SUBZONES_*` settings variables. `install_forever.cmd` deletes an installed `SUBZONES` folder so both don't load.
+  - `leSubZones.lua`: all runtime code.
   - `SubzoneBorders.lua`: generated data (~750 KB). Never hand-edit it; regenerate with `tools/build_borders.py`.
   - `Build.lua`: `ns.Build = nil` in the repo; `install_forever.cmd` stamps the installed copy with the commit hash, shown by `/subzones debug`.
-  - `SUBZONES.toc`
+  - `leSubZones.toc`
   - `icon.tga`: 64×64 uncompressed 32-bit TGA of the round logo, the TOC's `## IconTexture` (AddOns list).
 - `tools/`: offline data pipeline (Python 3, standard library except where noted). Needed to regenerate border data after game patches; not needed to run the addon.
   - `casc.py`: read-only CASC reader for the local install, with Blizzard CDN fallback.
   - `extract_game.py`: WDT/ADT → per-chunk area IDs → `data/game_areas.json`.
   - `borders.py`: shared geometry: grid → border polylines → smoothing → Lua writer.
-  - `build_borders.py`: `game_areas.json` (or `--source site`) → `SUBZONES/SubzoneBorders.lua`.
+  - `build_borders.py`: `game_areas.json` (or `--source site`) → `leSubZones/SubzoneBorders.lua`.
   - `extract_forever.cmd`: Windows; runs `extract_game.py` against the installed client (`WOWROOT` = the World of Warcraft folder), then commits and pushes only `data/game_areas.json`. The user runs it after a patch; then run `build_borders.py` here and commit `SubzoneBorders.lua`. CRLF.
-  - `install_forever.cmd`: Windows; the same script as the other Forever addons (Lerep, leprofit). Runs from a `%TEMP%` copy, pulls from GitHub (explains a rewritten history), mirrors `SUBZONES/` into `<WOW>\Interface\AddOns`, stamps `Build.lua`, packs `SUBZONES-<version>.zip` on the desktop and says when a full restart is needed. `WOW` at the top defaults to `_forever_`. CRLF line endings (`.gitattributes`).
-  - `package.py`: `SUBZONES/` → `releases/SUBZONES-<version>.zip` (TOC, the files it loads, the icon and LICENSE).
+  - `install_forever.cmd`: Windows; the same script as the other Forever addons (Lerep, leprofit). Runs from a `%TEMP%` copy, pulls from GitHub (explains a rewritten history), mirrors `leSubZones/` into `<WOW>\Interface\AddOns`, stamps `Build.lua`, packs `leSubZones-<version>.zip` on the desktop and says when a full restart is needed. `WOW` at the top defaults to `_forever_`. CRLF line endings (`.gitattributes`).
+  - `package.py`: `leSubZones/` → `releases/leSubZones-<version>.zip` (TOC, the files it loads, the icon and LICENSE).
   - `compare.py`: wowforevermap.com `subzones.json` vs game, chunk by chunk → `data/comparison.md` + PNGs (needs Pillow).
   - `data/`: extraction output, the site's JSON, comparison report.
   - `cache/`: CDN downloads (~65 MB, safe to delete; refetched on demand).
@@ -27,7 +27,7 @@ WoW addon for **WoW Forever** (client "Camelot", product `wowf` (live; the beta 
 
 ## Workflow
 
-- **After every addon change**, commit and push; the user runs `tools\install_forever.cmd`, which pulls and mirrors `SUBZONES/` into `C:\Program Files (x86)\World of Warcraft\_forever_\Interface\AddOns\SUBZONES`, then `/reload`s (or restarts when the TOC changed). `/subzones debug` shows the installed build.
+- **After every addon change**, commit and push; the user runs `tools\install_forever.cmd`, which pulls and mirrors `leSubZones/` into `C:\Program Files (x86)\World of Warcraft\_forever_\Interface\AddOns\leSubZones`, then `/reload`s (or restarts when the TOC changed). `/subzones debug` shows the installed build.
 - **After a game patch:** the user runs `tools\extract_forever.cmd` (pushes `tools/data/game_areas.json`); pull, run `python tools/build_borders.py` (with `tools/data/subzones.json` downloaded, for the name fallback), check, commit and push. `extract_game.py` picks the product from `.build.info`: `wowf` (live, `_forever_`) first, then `wow_classic_beta`.
 - **Testing:** there's no in-game test runner. Verify Lua by loading it in LuaJIT (`pip install lupa` in a throwaway venv, never system Python) against stubbed WoW APIs, then render the recorded lines/quads/labels with Pillow and look at the image. Keep harnesses in the scratchpad, not the project. State plainly that stub tests can't prove client behaviour; the user tests in-game and reports `/subzones debug` output.
 - Error and crash logs live in `...\_forever_\Errors\`. Lua errors come via BugSack. Other addons (MapUtils, EllesmereUI, …) produce their own errors; check the stack before assuming it's ours.
@@ -49,7 +49,7 @@ WoW addon for **WoW Forever** (client "Camelot", product `wowf` (live; the beta 
 - `Blizzard_MapCanvas` is load-on-demand: no XML templates inheriting `MapCanvasPinTemplate`, and touch `MapCanvasDataProviderMixin` only in `Install()`.
 - The world-map overlay is a plain frame on `WorldMapFrame:GetCanvas()` plus a data provider. Its frame level comes from its own pin frame level, `PIN_FRAME_LEVEL_SUBZONES`, inserted above `FOG_OF_WAR` (fallbacks after it), re-read on every draw. OpenMap inserts 80 levels of map art just above `MAP_EXPLORATION`; the old "exploration + 1" level put the lines under it. Fills are `SetColorTexture` quads shaped with `SetVertexOffset` (trapezoid decomposition).
 - Minimap clipping: square minimaps clip to a rectangle inset by `Minimap:GetHitRectInsets()` (positive values only). EllesmereUI keeps the minimap canvas square (Blizzard's projection needs it) and hides top/bottom strips with a mask for its title bar or rectangular style, setting the hit rect insets to the same crop. `GetMinimapShape()` still says `SQUARE` there.
-- Minimap mask: `hooksecurefunc(Minimap, "SetMaskTexture")` at file load records the texture (no getter exists); a MaskTexture with it, `SetAllPoints(Minimap)`, goes on every minimap line and casing. Masks set before SUBZONES loads are missed, so the geometric clipping (shape, hit-rect crop, `minimapEdge` inset, range) always runs too.
+- Minimap mask: `hooksecurefunc(Minimap, "SetMaskTexture")` at file load records the texture (no getter exists); a MaskTexture with it, `SetAllPoints(Minimap)`, goes on every minimap line and casing. Masks set before leSubZones loads are missed, so the geometric clipping (shape, hit-rect crop, `minimapEdge` inset, range) always runs too.
 - Lua 5.1: a multi-return call that isn't the last argument is truncated to one value (`f(g(), 0)`).
 
 ## Conventions

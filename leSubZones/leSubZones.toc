@@ -1,8 +1,8 @@
 ## Interface: 16001
-## Title: SUBZONES
+## Title: leSubZones
 ## Notes: Subzone borders, names and optional color fills on the world map, from the game's own terrain data.
 ## Category: Map & Minimap
-## IconTexture: Interface\AddOns\SUBZONES\icon
+## IconTexture: Interface\AddOns\leSubZones\icon
 ## Version: 1.0.0
 ## Author: addohm
 ## X-License: GPLv3
@@ -11,4 +11,4 @@
 
 Build.lua
 SubzoneBorders.lua
-SUBZONES.lua
+leSubZones.lua

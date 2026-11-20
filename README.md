@@ -1,23 +1,23 @@
-# SUBZONES
+# leSubZones
 
-![SUBZONES](art/subzones-banner.png)
+![leSubZones](art/subzones-banner.png)
 
 A WoW addon for WoW Forever (TOC 16001) that draws subzone borders and names on the world map, with optional color fills. The borders are extracted from the game's own terrain files.
 
 ## Using it
 
 - **Map checkbox:** a **Subzones** checkbox in a corner of the world map (bottom-left by default) toggles the overlay. Right-click it for the style, names, unexplored subzones, the button's corner, and **Options…**.
-- **Options panel:** Settings → AddOns → **SUBZONES**, or `/subzones options`. It has: show subzones, style (Lines only / Lines + tint / Tint only), subzone names, unexplored subzones, show on minimap, minimap shape, minimap range, minimap edge, map button corner, line width, and tint opacity.
+- **Options panel:** Settings → AddOns → **leSubZones**, or `/subzones options`. It has: show subzones, style (Lines only / Lines + tint / Tint only), subzone names, unexplored subzones, show on minimap, minimap shape, minimap range, minimap edge, map button corner, line width, and tint opacity.
 - **Commands:** `/subzones` (or `/sz`) followed by `toggle`, `options`, `lines`, `both`, `tint`, `labels`, `unexplored`, `minimap`, `shape <auto|round|square>`, `range <25-100>`, `edge <0-20>`, `corner <tl|tr|bl|br>`, `alpha <0-1>`, `width <px>`, `blend` or `debug`.
-- **Minimap:** your current zone's subzone borders are drawn around you too. They're clipped to the minimap's round or square edge (and to the part a minimap addon actually shows: SUBZONES reuses the mask a minimap addon sets, and reads crops such as EllesmereUI's title bar) and turn with it when Rotate Minimap is on. The minimap only redraws when you move, turn or zoom. Turn it off with **Show on minimap**. **Minimap edge** (0–20 px) keeps borders that far inside the minimap's edge. **Minimap range** (25–100%) limits the borders to a smaller area around you; zoom the minimap out to see further. **Minimap shape** is Auto by default, which asks your minimap addon through `GetMinimapShape()`. If your UI squares the minimap without saying so and the corners stay empty, set it to Square.
+- **Minimap:** your current zone's subzone borders are drawn around you too. They're clipped to the minimap's round or square edge (and to the part a minimap addon actually shows: leSubZones reuses the mask a minimap addon sets, and reads crops such as EllesmereUI's title bar) and turn with it when Rotate Minimap is on. The minimap only redraws when you move, turn or zoom. Turn it off with **Show on minimap**. **Minimap edge** (0–20 px) keeps borders that far inside the minimap's edge. **Minimap range** (25–100%) limits the borders to a smaller area around you; zoom the minimap out to see further. **Minimap shape** is Auto by default, which asks your minimap addon through `GetMinimapShape()`. If your UI squares the minimap without saying so and the corners stay empty, set it to Square.
 
 ## Where the borders come from
 
-The game has no subzone polygons. Instead, every terrain tile (ADT, 533⅓ yd) is a 16×16 grid of chunks, and each chunk header (MCNK) stores one area ID. Your subzone changes exactly when you cross into a chunk with a different area. SUBZONES' data is that grid, read straight from the client:
+The game has no subzone polygons. Instead, every terrain tile (ADT, 533⅓ yd) is a 16×16 grid of chunks, and each chunk header (MCNK) stores one area ID. Your subzone changes exactly when you cross into a chunk with a different area. leSubZones' data is that grid, read straight from the client:
 
 1. `tools/extract_game.py` reads each continent's tile list (WDT) and every tile's chunk area IDs. It reads your local install first and fetches anything the client hasn't downloaded from Blizzard's CDN, then writes `tools/data/game_areas.json`.
-2. `tools/build_borders.py` turns the grid into border lines between differing areas, one line per border. It smooths the 33⅓-yard staircase into curves, keeping the junctions fixed, and writes `SUBZONES/SubzoneBorders.lua`.
-3. In-game, SUBZONES projects the lines onto each map with `C_Map.GetWorldPosFromMapPos`. It asks the client which map owns each area (`C_Map.GetMapPosFromWorldPos`), drops the zone-level area, and names subzones with `C_Map.GetAreaInfo`. Fills are built from the same lines, so tint and borders always agree.
+2. `tools/build_borders.py` turns the grid into border lines between differing areas, one line per border. It smooths the 33⅓-yard staircase into curves, keeping the junctions fixed, and writes `leSubZones/SubzoneBorders.lua`.
+3. In-game, leSubZones projects the lines onto each map with `C_Map.GetWorldPosFromMapPos`. It asks the client which map owns each area (`C_Map.GetMapPosFromWorldPos`), drops the zone-level area, and names subzones with `C_Map.GetAreaInfo`. Fills are built from the same lines, so tint and borders always agree.
 
 ### Updating after a game patch
 
@@ -27,7 +27,7 @@ python tools/extract_game.py    # reads the installed build; first run ~6 min, c
 python tools/build_borders.py
 ```
 
-Then commit, push and run `tools\install_forever.cmd` (or copy `SUBZONES/` into `Interface/AddOns/`). Useful options:
+Then commit, push and run `tools\install_forever.cmd` (or copy `leSubZones/` into `Interface/AddOns/`). Useful options:
 - `tools\extract_forever.cmd` (Windows): runs the extraction against your installed client and pushes only `tools/data/game_areas.json`, so the borders can be rebuilt elsewhere.
 - `extract_game.py --product`: pick a different install. By default it's `wowf` (live WoW: Forever), else `wow_classic_beta`.
 - `extract_game.py --wdt ID=FDID`: add a continent that couldn't be identified automatically.
@@ -48,18 +48,18 @@ This compares the site's subzones (`tools/data/subzones.json`) with the game, ch
 | --- | --- |
 | `casc.py` | Read-only access to the game's storage (CASC), with Blizzard CDN fallback; standard library only |
 | `extract_game.py` | Terrain chunk area IDs → `data/game_areas.json` |
-| `build_borders.py` | Area grid → `SUBZONES/SubzoneBorders.lua` |
+| `build_borders.py` | Area grid → `leSubZones/SubzoneBorders.lua` |
 | `borders.py` | Shared geometry: grid → border lines, smoothing, Lua output |
 | `compare.py` | Site vs game report |
 | `extract_forever.cmd` | Windows: extract the terrain areas from the installed client and push `data/game_areas.json` |
 | `install_forever.cmd` | Windows: pull from GitHub, install the addon into the Forever client, pack a zip on the desktop |
-| `package.py` | Addon → `releases/SUBZONES-<version>.zip` for CurseForge / Wago |
+| `package.py` | Addon → `releases/leSubZones-<version>.zip` for CurseForge / Wago |
 
 Limits: this beta build ships no decryption keys, so the 8 encrypted (unreleased) continents are skipped, and area names are only read in-game. One 16-tile map (fileDataID 790377) isn't matched to a continent ID automatically.
 
 ## License
 
-SUBZONES is licensed under the GNU General Public License version 3 (GPLv3); see [LICENSE](LICENSE).
+leSubZones is licensed under the GNU General Public License version 3 (GPLv3); see [LICENSE](LICENSE).
 
 ## Docs
 

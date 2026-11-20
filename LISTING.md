@@ -1,4 +1,4 @@
-# SUBZONES: CurseForge and Wago listing
+# leSubZones: CurseForge and Wago listing
 
 Copy-paste material for the project pages. Placeholders are in [brackets].
 
@@ -8,7 +8,7 @@ Copy-paste material for the project pages. Placeholders are in [brackets].
 
 | Field | Value |
 | --- | --- |
-| Name | SUBZONES |
+| Name | leSubZones |
 | Slug | `subzones` (fallback `subzones-forever`) |
 | Game version | WoW: Forever (Interface 16001, client 1.60.1) |
 | Author | addohm |
@@ -40,15 +40,15 @@ Copy-paste material for the project pages. Placeholders are in [brackets].
 
 *(Paste as Markdown. Both sites accept it.)*
 
-### SUBZONES
+### leSubZones
 
 **Built for WoW: Forever, where the map shows you the zone but not where its subzones begin and
 end.**
 
-SUBZONES draws every subzone's borders and name on your world map, with optional color tints, and
+leSubZones draws every subzone's borders and name on your world map, with optional color tints, and
 puts the borders around you on the minimap. The borders aren't hand-drawn or guessed: they come
 from the game's own terrain files, the same data the client uses to decide which subzone you're
-standing in. When you cross a SUBZONES line, your subzone changes.
+standing in. When you cross a leSubZones line, your subzone changes.
 
 #### On the world map
 
@@ -73,7 +73,7 @@ standing in. When you cross a SUBZONES line, your subzone changes.
 #### From the game's own terrain
 
 - WoW has no subzone shapes. Instead, the world is a grid of 33-yard terrain chunks, and each chunk
-  is tagged with one area. SUBZONES reads that grid from the client, traces the edges between areas
+  is tagged with one area. leSubZones reads that grid from the client, traces the edges between areas
   and smooths the 33-yard staircase into curves.
 - It matches **99.95%** of the subzone chunks published by wowforevermap.com. The only differences
   are where Forever itself changed the map (Dalaran and Windstead).
@@ -83,7 +83,7 @@ standing in. When you cross a SUBZONES line, your subzone changes.
 
 - Style, subzone names, unexplored subzones, minimap borders, minimap shape, range and edge, the map button's corner, line width
   and tint opacity.
-- All in **Settings → AddOns → SUBZONES**, the right-click menu on the map checkbox, or by command.
+- All in **Settings → AddOns → leSubZones**, the right-click menu on the map checkbox, or by command.
 
 #### Commands
 
@@ -98,7 +98,7 @@ standing in. When you cross a SUBZONES line, your subzone changes.
 
 - Covers Eastern Kingdoms, Kalimdor and Zephras Isle.
 - Draws on zone maps only, never whole continents, so the map stays fast.
-- Display only: SUBZONES never acts for you.
+- Display only: leSubZones never acts for you.
 - Everything stays on your computer in the game's own saved data. No network access, no libraries.
 - Free and open source under the GNU GPL v3: the code is on GitHub.
 - Found a border in the wrong place? Open an issue on GitHub with a screenshot, and include what
@@ -113,7 +113,7 @@ standing in. When you cross a SUBZONES line, your subzone changes.
 3. The minimap while standing on a border, round, with Rotate Minimap on.
 4. A partly explored zone: grey names next to gold ones.
 5. Tint only on a zone with many small subzones.
-6. Settings → AddOns → SUBZONES.
+6. Settings → AddOns → leSubZones.
 7. The right-click menu on the map's **Subzones** checkbox.
 
 Tips: use a clean UI (hide other addons), 16:9 at 1920×1080, crop to the subject, and scale the UI
@@ -135,15 +135,16 @@ so the names are readable.
 
 ## Before publishing
 
-- Test the packaged `releases/SUBZONES-1.0.0.zip` in game: the icon in the AddOns list, and
-  `/subzones debug` saying build `release`.
-- The package is ready at 1.0.0. For later versions, bump `## Version` in `SUBZONES/SUBZONES.toc`,
+- The addon was renamed from SUBZONES after `releases/SUBZONES-1.0.0.zip` was built. Build the first
+  release under the new name (`releases/leSubZones-<version>.zip`) and test it in game: the icon in
+  the AddOns list, and `/subzones debug` saying build `release`.
+- The package is ready at 1.0.0. For later versions, bump `## Version` in `leSubZones/leSubZones.toc`,
   move the CHANGELOG's Unreleased entries under the version, then `python tools/package.py` and
   commit the new zip in `releases/` (see DEPLOY.md).
-- Add the project IDs to `SUBZONES/SUBZONES.toc` (`## X-Curse-Project-ID`, `## X-Wago-ID`) once the
+- Add the project IDs to `leSubZones/leSubZones.toc` (`## X-Curse-Project-ID`, `## X-Wago-ID`) once the
   projects exist, then rebuild the zip.
 - Check that CurseForge and Wago list a Forever game version (Interface 16001) at launch, Nov 4,
   2026.
 - Cut the wowforevermap.com line if you'd rather not name another project.
 - Project icon: `art/subzones-logo-400.png`. The same logo is the addon's in-game icon
-  (`SUBZONES/icon.tga`, in the AddOns list).
+  (`leSubZones/icon.tga`, in the AddOns list).

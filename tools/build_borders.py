@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate SUBZONES/SubzoneBorders.lua from the game's terrain (or the site's data).
+"""Generate leSubZones/SubzoneBorders.lua from the game's terrain (or the site's data).
 
     python build_borders.py                  # from tools/data/game_areas.json (extract_game.py)
     python build_borders.py --source site    # from tools/data/subzones.json (wowforevermap.com)
@@ -20,7 +20,7 @@ from compare import game_grid
 
 ROOT = Path(__file__).resolve().parent
 DATA = ROOT / "data"
-DEFAULT_OUT = ROOT.parent / "SUBZONES" / "SubzoneBorders.lua"
+DEFAULT_OUT = ROOT.parent / "leSubZones" / "SubzoneBorders.lua"
 
 
 def main():

@@ -1,7 +1,7 @@
 @echo off
-rem Update this repo from GitHub, copy SUBZONES into the WoW: Forever client, and pack
-rem SUBZONES-<version>.zip on the desktop. Run it from a terminal (from any folder), then restart the
-rem client, or /reload if SUBZONES was already loaded. It only pulls what's on GitHub: push your
+rem Update this repo from GitHub, copy leSubZones into the WoW: Forever client, and pack
+rem leSubZones-<version>.zip on the desktop. Run it from a terminal (from any folder), then restart the
+rem client, or /reload if leSubZones was already loaded. It only pulls what's on GitHub: push your
 rem commits first.
 setlocal
 
@@ -24,8 +24,8 @@ set "RESULT=0"
 set "RESTART=0"
 set "LIST="
 
-if not exist "%REPO%\SUBZONES\SUBZONES.toc" (
-  echo Can't find the addon in "%REPO%\SUBZONES". Is this script in the repo's tools folder?
+if not exist "%REPO%\leSubZones\leSubZones.toc" (
+  echo Can't find the addon in "%REPO%\leSubZones". Is this script in the repo's tools folder?
   set "RESULT=1"
   goto done
 )
@@ -57,34 +57,41 @@ if errorlevel 1 (
   goto done
 )
 
-call :install SUBZONES
+rem Builds before the rename were installed as "SUBZONES". Left there, the game would load both:
+rem remove it first. (findstr matches case, so this finds only the old name.)
+dir /b /ad "%ADDONS%" 2>nul | findstr /x /c:"SUBZONES" >nul && (
+  echo Removing the old "SUBZONES" folder: leSubZones replaces it.
+  rmdir /s /q "%ADDONS%\SUBZONES"
+)
+
+call :install leSubZones
 if "%RESULT%"=="1" goto done
 
 rem Stamp the installed addon with the commit, so /subzones debug shows which build is running.
 rem "-dirty" means the copy includes changes that aren't committed.
 for /f %%h in ('git -C "%REPO%" rev-parse --short HEAD') do set "BUILD=%%h"
-for /f %%s in ('git -C "%REPO%" status --porcelain -- SUBZONES') do set "BUILD=%BUILD%-dirty"
-> "%ADDONS%\SUBZONES\Build.lua" (
+for /f %%s in ('git -C "%REPO%" status --porcelain -- leSubZones') do set "BUILD=%BUILD%-dirty"
+> "%ADDONS%\leSubZones\Build.lua" (
   echo local _, ns = ...
   echo ns.Build = "%BUILD%"
 )
 echo Installed build %BUILD%:%LIST%
 
-rem Also pack the committed addon as SUBZONES-<version>.zip on the desktop, ready to share or upload.
+rem Also pack the committed addon as leSubZones-<version>.zip on the desktop, ready to share or upload.
 rem git archive takes only committed files (without the build stamp above). The version is
-rem ## Version in SUBZONES.toc. The desktop comes from Windows, since OneDrive can move it.
+rem ## Version in leSubZones.toc. The desktop comes from Windows, since OneDrive can move it.
 set "VERSION="
-for /f "tokens=3" %%v in ('findstr /b /c:"## Version:" "%REPO%\SUBZONES\SUBZONES.toc"') do set "VERSION=%%v"
+for /f "tokens=3" %%v in ('findstr /b /c:"## Version:" "%REPO%\leSubZones\leSubZones.toc"') do set "VERSION=%%v"
 set "DESKTOP=%USERPROFILE%\Desktop"
 for /f "usebackq delims=" %%d in (`powershell -NoProfile -Command "[Environment]::GetFolderPath('Desktop')"`) do set "DESKTOP=%%d"
 if "%VERSION%"=="" (
-  echo No ## Version in SUBZONES.toc, so no zip was made.
+  echo No ## Version in leSubZones.toc, so no zip was made.
 ) else (
-  git -C "%REPO%" archive --format=zip --output="%DESKTOP%\SUBZONES-%VERSION%.zip" HEAD %LIST%
+  git -C "%REPO%" archive --format=zip --output="%DESKTOP%\leSubZones-%VERSION%.zip" HEAD %LIST%
   if errorlevel 1 (
-    echo Couldn't write "%DESKTOP%\SUBZONES-%VERSION%.zip".
+    echo Couldn't write "%DESKTOP%\leSubZones-%VERSION%.zip".
   ) else (
-    echo Packed "%DESKTOP%\SUBZONES-%VERSION%.zip" from the last commit.
+    echo Packed "%DESKTOP%\leSubZones-%VERSION%.zip" from the last commit.
   )
 )
 if "%RESTART%"=="1" (
