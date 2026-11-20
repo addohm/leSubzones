@@ -12,6 +12,10 @@ All notable changes to SubZones-WoW-Forever. The format follows
 - **Minimap shape** (Auto / Round / Square). Auto keeps reading `GetMinimapShape()`. Round or Square overrides it for UIs that reshape the minimap without defining that function, which left a square minimap's corners empty. Also in the right-click menu and `/subzones shape`.
 - **Minimap range** (25–100% of the minimap's radius) limits the minimap borders to the area around you. Also in the right-click menu (25/50/75/100%) and `/subzones range <25-100>`.
 
+### Changed
+
+- `tools/install_beta.cmd` is replaced by `tools/install_forever.cmd`, the same install script as the other Forever addons. It installs into the live `_forever_` client by default (`WOW` at the top), runs from a temporary copy so a pull can update it, explains how to recover when GitHub's history was rewritten, marks builds with uncommitted changes `-dirty`, packs `SUBZONES-<version>.zip` on the desktop and says when the game needs a full restart instead of `/reload`.
+
 ### Fixed
 
 - The minimap now redraws when a minimap addon changes its reported shape.
