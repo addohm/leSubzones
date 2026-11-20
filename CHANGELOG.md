@@ -21,6 +21,7 @@ All notable changes to SubZones-WoW-Forever. The format follows
 ### Fixed
 
 - With map art addons such as OpenMap, the borders and names were hidden under the map art. SUBZONES now adds its own layer to the world map's pin frame levels, above all map art and below the icons.
+- On EllesmereUI's square minimap with a title bar (and its rectangular one), minimap borders ran past the shown map onto the title bar and below the frame. SUBZONES now reads the hidden top and bottom strips from the minimap's hit rect insets, which EllesmereUI sets to its crop, and clips to the part that's shown. `/subzones debug` lists them as hidden edges.
 - The minimap now redraws when a minimap addon changes its reported shape.
 
 ## [1.0.0] - 2026-10-23

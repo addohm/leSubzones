@@ -617,8 +617,8 @@ local function ZoneMapFor(mapID)
 	return info and info.mapID
 end
 
--- Clips a segment to a circle of radius r (or a square of half-size r)
--- centered on the origin; returns nothing when it lies entirely outside.
+-- Clips a segment to a circle of radius r centered on the origin (or to a
+-- rectangle); returns nothing when it lies entirely outside.
 local function ClipRound(x1, y1, x2, y2, r)
 	local dx, dy = x2 - x1, y2 - y1
 	local a = dx * dx + dy * dy
@@ -635,12 +635,12 @@ local function ClipRound(x1, y1, x2, y2, r)
 	return x1 + dx * t0, y1 + dy * t0, x1 + dx * t1, y1 + dy * t1
 end
 
-local function ClipSquare(x1, y1, x2, y2, r)
+local function ClipRect(x1, y1, x2, y2, rect)
 	local dx, dy = x2 - x1, y2 - y1
 	local t0, t1 = 0, 1
 	-- Liang-Barsky against the four edges.
 	local p = { -dx, dx, -dy, dy }
-	local q = { x1 + r, r - x1, y1 + r, r - y1 }
+	local q = { x1 - rect.left, rect.right - x1, y1 - rect.bottom, rect.top - y1 }
 	for i = 1, 4 do
 		if p[i] == 0 then
 			if q[i] < 0 then return end
@@ -686,6 +686,18 @@ local function ClearMinimap()
 	ReleaseAll(minimapFrame.lines)
 end
 
+-- Minimap styles that hide part of the square canvas (EllesmereUI's title bar
+-- and rectangular crops) shrink the minimap's hit rect to match, so its insets
+-- are the hidden strips. Negative insets (a larger click area) don't count.
+local function MinimapCrop(half)
+	if not Minimap.GetHitRectInsets then return 0, 0, 0, 0 end
+	local function inset(v)
+		return math.min(math.max(tonumber(v) or 0, 0), half * 0.9)
+	end
+	local left, right, top, bottom = Minimap:GetHitRectInsets()
+	return inset(left), inset(right), inset(top), inset(bottom)
+end
+
 -- Player position, zone context and minimap geometry, or nil when there is
 -- nothing to draw (option off, instance, map without data).
 local function MinimapView()
@@ -706,9 +718,13 @@ local function MinimapView()
 	if db.minimapShape == "auto" then
 		square = GetMinimapShape and GetMinimapShape() == "SQUARE" or false
 	end
+	local width = Minimap:GetWidth()
+	local left, right, top, bottom = MinimapCrop(width / 2)
 	return {
 		context = context, x = world.x, y = world.y, facing = facing or 0,
-		diameter = sizes[zoom] or sizes[0], width = Minimap:GetWidth(), square = square,
+		diameter = sizes[zoom] or sizes[0], width = width, square = square,
+		crop = ("%.1f,%.1f,%.1f,%.1f"):format(left, right, top, bottom), -- compared between redraws
+		left = left, right = right, top = top, bottom = bottom,
 	}
 end
 
@@ -718,11 +734,21 @@ local function DrawMinimap(view)
 	local continent, context = view.context.continent, view.context
 	local byArea, bounds = LinesByArea(continent), LineBounds(continent)
 	local scale = view.width / view.diameter -- pixels per yard
-	local edge = (view.width / 2 - MINIMAP_EDGE_INSET) * db.minimapRange
-	local reach = view.diameter * 0.75 * db.minimapRange -- yards; covers a square minimap's corners
+	local half = view.width / 2 - MINIMAP_EDGE_INSET
+	local range = db.minimapRange
+	local reach = view.diameter * 0.75 * range -- yards; covers a square minimap's corners
 	local px, py = view.x, view.y
 	local cos, sin = math.cos(-view.facing), math.sin(-view.facing)
-	local clip = view.square and ClipSquare or ClipRound
+	local edge = half * range
+	local clip = ClipRound
+	if view.square then
+		-- The shown part of the canvas, shrunk toward the player by the range.
+		edge = {
+			left = -(half - view.left) * range, right = (half - view.right) * range,
+			bottom = -(half - view.bottom) * range, top = (half - view.top) * range,
+		}
+		clip = ClipRect
+	end
 	local thickness = db.lineWidth
 
 	-- World offset -> minimap pixels, x right and y up: north is +worldX
@@ -765,12 +791,13 @@ local function MinimapOnUpdate(_, elapsed)
 	local last = minimapLast
 	if view then
 		if last.x and last.context == view.context and last.diameter == view.diameter and last.width == view.width
-			and last.square == view.square
+			and last.square == view.square and last.crop == view.crop
 			and math.abs(last.x - view.x) < 0.05 and math.abs(last.y - view.y) < 0.05
 			and math.abs(last.facing - view.facing) < 0.002 then
 			return
 		end
 		last.context, last.diameter, last.width, last.square = view.context, view.diameter, view.width, view.square
+		last.crop = view.crop
 		last.x, last.y, last.facing = view.x, view.y, view.facing
 	elseif last.empty then
 		return
@@ -1064,8 +1091,10 @@ local function PrintMinimapDebug()
 	Print(("minimap %.0fx%.0f at %.0f,%.0f, scale %.2f (effective %.2f) | shape %s, reported %s | range %d%%")
 		:format(width or 0, height or 0, left or 0, bottom or 0, Minimap:GetScale(), Minimap:GetEffectiveScale(),
 			db.minimapShape, reported, db.minimapRange * 100 + 0.5))
-	Print(("minimap zoom %d, %s | %d lines drawn"):format(Minimap:GetZoom() or 0,
-		IsIndoors and IsIndoors() and "indoors" or "outdoors", minimapFrame and minimapFrame.lines.used or 0))
+	local cropLeft, cropRight, cropTop, cropBottom = MinimapCrop((width or 0) / 2)
+	Print(("minimap zoom %d, %s | hidden edges %.0f/%.0f/%.0f/%.0f (left/right/top/bottom) | %d lines drawn")
+		:format(Minimap:GetZoom() or 0, IsIndoors and IsIndoors() and "indoors" or "outdoors",
+			cropLeft, cropRight, cropTop, cropBottom, minimapFrame and minimapFrame.lines.used or 0))
 end
 
 local function PrintDebug()
