@@ -10,6 +10,8 @@ All notable changes to SubZones-WoW-Forever. The format follows
 
 - The world map's **Subzones** checkbox can sit in any corner of the map (bottom-left by default). Pick it under **Map button** in the options panel, **Button position** in the right-click menu, or `/subzones corner <tl|tr|bl|br>`. On the right-hand corners the label sits to the left of the box.
 - **Minimap shape** (Auto / Round / Square). Auto keeps reading `GetMinimapShape()`. Round or Square overrides it for UIs that reshape the minimap without defining that function, which left a square minimap's corners empty. Also in the right-click menu and `/subzones shape`.
+- **Minimap edge** (0–20 px, default 2): how far inside the minimap's edge the borders stop, for minimaps whose frame covers part of the map. Also in the right-click menu (0/2/5/10/15 px) and `/subzones edge <0-20>`.
+- Minimap borders take on the minimap's own mask whenever a minimap addon sets one, so they're trimmed to exactly the shape it shows (round, square, cropped or anything else). `/subzones debug` shows the mask it saw. Masks set before SUBZONES loads can't be seen; the shape and crop clipping still apply then.
 - **Minimap range** (25–100% of the minimap's radius) limits the minimap borders to the area around you. Also in the right-click menu (25/50/75/100%) and `/subzones range <25-100>`.
 
 ### Changed

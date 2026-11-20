@@ -40,6 +40,8 @@ local CORNER_ALIASES = { tl = "TOPLEFT", tr = "TOPRIGHT", bl = "BOTTOMLEFT", br 
 local SHAPES = { auto = "Auto", round = "Round", square = "Square" }
 local SHAPE_ORDER = { "auto", "round", "square" }
 local RANGE_STEPS = { 0.25, 0.5, 0.75, 1 } -- right-click menu presets
+local EDGE_STEPS = { 0, 2, 5, 10, 15 } -- right-click menu presets, pixels
+local EDGE_MAX = 20
 
 local DEFAULTS = {
 	enabled = true,
@@ -49,6 +51,7 @@ local DEFAULTS = {
 	minimap = true,
 	minimapShape = "auto",
 	minimapRange = 1, -- fraction of the minimap's radius that gets borders
+	minimapEdge = 2, -- pixels kept clear inside the minimap's edge
 	corner = "BOTTOMLEFT",
 	alpha = 0.35,
 	blend = "BLEND",
@@ -581,9 +584,13 @@ local MINIMAP_DIAMETER = {
 	outdoor = { [0] = 466 + 2 / 3, 400, 333 + 1 / 3, 266 + 2 / 3, 200, 133 + 1 / 3 },
 }
 local MINIMAP_INTERVAL = 0.03 -- seconds between redraws while something changes
-local MINIMAP_EDGE_INSET = 2 -- pixels kept clear inside the minimap's edge
 
 local minimapFrame
+-- The last mask texture any addon put on the minimap. There's no getter, so
+-- SetMaskTexture is watched from load; the same mask on our lines trims them
+-- to exactly what the minimap shows, whatever its shape.
+local minimapMaskTexture
+local minimapMask -- our MaskTexture once the minimap's is known
 local minimapLast = {} -- what the last redraw was based on
 local minimapElapsed = 0
 
@@ -658,12 +665,40 @@ local function ClipRect(x1, y1, x2, y2, rect)
 	return x1 + dx * t0, y1 + dy * t0, x1 + dx * t1, y1 + dy * t1
 end
 
+local function MaskLine(line)
+	if minimapMask and line.AddMaskTexture then
+		line:AddMaskTexture(minimapMask)
+	end
+	return line
+end
+
 local function NewMinimapCasing()
-	return minimapFrame:CreateLine(nil, "OVERLAY", nil, 1)
+	return MaskLine(minimapFrame:CreateLine(nil, "OVERLAY", nil, 1))
 end
 
 local function NewMinimapLine()
-	return minimapFrame:CreateLine(nil, "OVERLAY", nil, 2)
+	return MaskLine(minimapFrame:CreateLine(nil, "OVERLAY", nil, 2))
+end
+
+-- Creates our mask on first use (lines made before it get it then) and
+-- follows the minimap's mask when an addon changes it.
+local function UpdateMinimapMask()
+	if not (minimapFrame and minimapMaskTexture and minimapFrame.CreateMaskTexture) then return end
+	if not minimapMask then
+		minimapMask = minimapFrame:CreateMaskTexture()
+		minimapMask:SetAllPoints(Minimap)
+		for _, pool in ipairs({ minimapFrame.casings, minimapFrame.lines }) do
+			for _, line in ipairs(pool) do MaskLine(line) end
+		end
+	end
+	minimapMask:SetTexture(minimapMaskTexture, "CLAMPTOBLACKADDITIVE", "CLAMPTOBLACKADDITIVE")
+end
+
+if Minimap and Minimap.SetMaskTexture then
+	hooksecurefunc(Minimap, "SetMaskTexture", function(_, texture)
+		minimapMaskTexture = texture
+		UpdateMinimapMask()
+	end)
 end
 
 local function AddMinimapSegment(x1, y1, x2, y2, thickness)
@@ -734,7 +769,7 @@ local function DrawMinimap(view)
 	local continent, context = view.context.continent, view.context
 	local byArea, bounds = LinesByArea(continent), LineBounds(continent)
 	local scale = view.width / view.diameter -- pixels per yard
-	local half = view.width / 2 - MINIMAP_EDGE_INSET
+	local half = view.width / 2 - db.minimapEdge
 	local range = db.minimapRange
 	local reach = view.diameter * 0.75 * range -- yards; covers a square minimap's corners
 	local px, py = view.x, view.y
@@ -815,6 +850,7 @@ local function InstallMinimap()
 	minimapFrame.casings = { used = 0 }
 	minimapFrame.lines = { used = 0 }
 	minimapFrame:SetScript("OnUpdate", MinimapOnUpdate)
+	UpdateMinimapMask()
 end
 
 -- Pins the map checkbox to the chosen corner, with its label on the side
@@ -911,6 +947,8 @@ local function RegisterSettings()
 		"How strong the color fills are.")
 	slider("minimapRange", "Minimap range", 0.25, 1, 0.05, function(v) return ("%d%%"):format(v * 100 + 0.5) end,
 		"How far from you borders are drawn on the minimap, as a share of its radius. Zoom the minimap out to see further.")
+	slider("minimapEdge", "Minimap edge", 0, EDGE_MAX, 1, function(v) return ("%d px"):format(v) end,
+		"Pixels kept clear inside the minimap's edge. Raise it if borders run onto your minimap's frame.")
 
 	Settings.RegisterAddOnCategory(category)
 	settingsCategory = category
@@ -972,6 +1010,13 @@ local function ShowOptionsMenu(owner)
 					db.minimapRange = step
 					Refresh()
 				end)
+		end
+		local edge = root:CreateButton("Minimap edge")
+		for _, step in ipairs(EDGE_STEPS) do
+			edge:CreateRadio(("%d px"):format(step), function() return db.minimapEdge == step end, function()
+				db.minimapEdge = step
+				Refresh()
+			end)
 		end
 		local position = root:CreateButton("Button position")
 		for _, corner in ipairs(CORNER_ORDER) do
@@ -1092,9 +1137,11 @@ local function PrintMinimapDebug()
 		:format(width or 0, height or 0, left or 0, bottom or 0, Minimap:GetScale(), Minimap:GetEffectiveScale(),
 			db.minimapShape, reported, db.minimapRange * 100 + 0.5))
 	local cropLeft, cropRight, cropTop, cropBottom = MinimapCrop((width or 0) / 2)
-	Print(("minimap zoom %d, %s | hidden edges %.0f/%.0f/%.0f/%.0f (left/right/top/bottom) | %d lines drawn")
+	Print(("minimap zoom %d, %s | hidden edges %.0f/%.0f/%.0f/%.0f (left/right/top/bottom) | edge %d px | %d lines drawn")
 		:format(Minimap:GetZoom() or 0, IsIndoors and IsIndoors() and "indoors" or "outdoors",
-			cropLeft, cropRight, cropTop, cropBottom, minimapFrame and minimapFrame.lines.used or 0))
+			cropLeft, cropRight, cropTop, cropBottom, db.minimapEdge, minimapFrame and minimapFrame.lines.used or 0))
+	Print("minimap mask:", minimapMaskTexture and (tostring(minimapMaskTexture) .. (minimapMask and ", on the lines" or ""))
+		or "not seen (set before SUBZONES loaded, or never changed)")
 end
 
 local function PrintDebug()
@@ -1145,6 +1192,14 @@ local function HandleSlash(msg)
 		else
 			Print("usage: /subzones range <25-100>")
 		end
+	elseif cmd == "edge" then
+		local value = tonumber(arg)
+		if value and value >= 0 and value <= EDGE_MAX then
+			db.minimapEdge = math.floor(value + 0.5)
+			Print(("minimap edge %d px"):format(db.minimapEdge))
+		else
+			Print(("usage: /subzones edge <0-%d>"):format(EDGE_MAX))
+		end
 	elseif cmd == "corner" then
 		local corner = CORNER_ALIASES[arg or ""] or (arg and CORNERS[arg:upper()] and arg:upper())
 		if corner then
@@ -1172,7 +1227,7 @@ local function HandleSlash(msg)
 		PrintDebug()
 		return
 	else
-		Print("/subzones [toggle] | options | lines | both | tint | labels | unexplored | minimap | shape <auto|round|square> | range <25-100> | corner <tl|tr|bl|br> | alpha <0-1> | width <px> | blend | debug")
+		Print("/subzones [toggle] | options | lines | both | tint | labels | unexplored | minimap | shape <auto|round|square> | range <25-100> | edge <0-20> | corner <tl|tr|bl|br> | alpha <0-1> | width <px> | blend | debug")
 		return
 	end
 	Refresh()
@@ -1202,6 +1257,9 @@ events:SetScript("OnEvent", function(_, event, arg1)
 		if not SHAPES[db.minimapShape] then db.minimapShape = DEFAULTS.minimapShape end
 		if type(db.minimapRange) ~= "number" or db.minimapRange < 0.25 or db.minimapRange > 1 then
 			db.minimapRange = DEFAULTS.minimapRange
+		end
+		if type(db.minimapEdge) ~= "number" or db.minimapEdge < 0 or db.minimapEdge > EDGE_MAX then
+			db.minimapEdge = DEFAULTS.minimapEdge
 		end
 		local ok, err = pcall(RegisterSettings)
 		if not ok then Print("couldn't add the options panel:", err) end

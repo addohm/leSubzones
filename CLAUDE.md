@@ -49,6 +49,7 @@ WoW addon for **WoW Forever** (client "Camelot", product `wowf` (live; the beta 
 - `Blizzard_MapCanvas` is load-on-demand: no XML templates inheriting `MapCanvasPinTemplate`, and touch `MapCanvasDataProviderMixin` only in `Install()`.
 - The world-map overlay is a plain frame on `WorldMapFrame:GetCanvas()` plus a data provider. Its frame level comes from its own pin frame level, `PIN_FRAME_LEVEL_SUBZONES`, inserted above `FOG_OF_WAR` (fallbacks after it), re-read on every draw. OpenMap inserts 80 levels of map art just above `MAP_EXPLORATION`; the old "exploration + 1" level put the lines under it. Fills are `SetColorTexture` quads shaped with `SetVertexOffset` (trapezoid decomposition).
 - Minimap clipping: square minimaps clip to a rectangle inset by `Minimap:GetHitRectInsets()` (positive values only). EllesmereUI keeps the minimap canvas square (Blizzard's projection needs it) and hides top/bottom strips with a mask for its title bar or rectangular style, setting the hit rect insets to the same crop. `GetMinimapShape()` still says `SQUARE` there.
+- Minimap mask: `hooksecurefunc(Minimap, "SetMaskTexture")` at file load records the texture (no getter exists); a MaskTexture with it, `SetAllPoints(Minimap)`, goes on every minimap line and casing. Masks set before SUBZONES loads are missed, so the geometric clipping (shape, hit-rect crop, `minimapEdge` inset, range) always runs too.
 - Lua 5.1: a multi-return call that isn't the last argument is truncated to one value (`f(g(), 0)`).
 
 ## Conventions
