@@ -1,10 +1,10 @@
-# Deploying SubZones-WoW-Forever
+# Deploying leSubzones
 
 SUBZONES is a client-side WoW addon. There's no server: "deploying" means copying the addon folder into the game's AddOns folder.
 
 ## First-time setup
 
-1. Clone the repo anywhere: `git clone https://github.com/addohm/SubZones-WoW-Forever.git`.
+1. Clone the repo anywhere: `git clone https://github.com/addohm/leSubzones.git`.
 2. Open `tools\install_forever.cmd` and check `WOW` at the top: it's the client folder, by default `C:\Program Files (x86)\World of Warcraft\_forever_`, the live game. Change it for another install (for example `_classic_beta_`).
 3. Run `tools\install_forever.cmd` from a terminal, then start the game and make sure **SUBZONES** is enabled in the AddOns list.
 

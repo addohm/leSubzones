@@ -62,4 +62,4 @@ WoW addon for **WoW Forever** (client "Camelot", product `wowf` (live; the beta 
 
 ## Git
 
-GitHub: `addohm/SubZones-WoW-Forever` (public, GPLv3 in `LICENSE`), branch `main`. Everything committed is world-readable: no local paths, hostnames or private notes. `.gitignore` covers the global secret patterns, `tools/cache/`, `tools/data/subzones.json` (wowforevermap.com's data; never commit it) and `*.zip` except `releases/*.zip`. Record notable changes in CHANGELOG.md, and keep README/DEPLOY in step with them.
+GitHub: `addohm/leSubzones` (public, GPLv3 in `LICENSE`), branch `main`. Everything committed is world-readable: no local paths, hostnames or private notes. `.gitignore` covers the global secret patterns, `tools/cache/`, `tools/data/subzones.json` (wowforevermap.com's data; never commit it) and `*.zip` except `releases/*.zip`. Record notable changes in CHANGELOG.md, and keep README/DEPLOY in step with them.

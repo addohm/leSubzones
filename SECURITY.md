@@ -6,7 +6,7 @@ Contact the maintainer through GitHub (@addohm), for example via a private secur
 
 ## Secrets
 
-SubZones-WoW-Forever uses no secrets:
+leSubzones uses no secrets:
 
 - **The addon:** runs inside the game client, with no network access or credentials.
 - **The data tools:** read the local game install, and download only public files from Blizzard's CDN anonymously. The CDN hosts and paths come from the install's own `.build.info`.

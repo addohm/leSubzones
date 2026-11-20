@@ -13,8 +13,8 @@ Copy-paste material for the project pages. Placeholders are in [brackets].
 | Game version | WoW: Forever (Interface 16001, client 1.60.1) |
 | Author | addohm |
 | License | GNU General Public License version 3 (GPLv3) |
-| Source | https://github.com/addohm/SubZones-WoW-Forever |
-| Issues | https://github.com/addohm/SubZones-WoW-Forever/issues |
+| Source | https://github.com/addohm/leSubzones |
+| Issues | https://github.com/addohm/leSubzones/issues |
 
 **Categories**
 - CurseForge: Map & Minimap (main), Quests & Leveling
