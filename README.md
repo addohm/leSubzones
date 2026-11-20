@@ -6,9 +6,9 @@ A WoW addon for WoW Forever (TOC 16001) that draws subzone borders and names on 
 
 ## Using it
 
-- **Map checkbox:** a **Subzones** checkbox at the bottom-left of the world map toggles the overlay. Right-click it for the style, names, unexplored subzones, and **Options…**.
-- **Options panel:** Settings → AddOns → **SUBZONES**, or `/subzones options`. It has: show subzones, style (Lines only / Lines + tint / Tint only), subzone names, unexplored subzones, show on minimap, line width, and tint opacity.
-- **Commands:** `/subzones` (or `/sz`) followed by `toggle`, `options`, `lines`, `both`, `tint`, `labels`, `unexplored`, `minimap`, `alpha <0-1>`, `width <px>`, `blend` or `debug`.
+- **Map checkbox:** a **Subzones** checkbox in a corner of the world map (bottom-left by default) toggles the overlay. Right-click it for the style, names, unexplored subzones, the button's corner, and **Options…**.
+- **Options panel:** Settings → AddOns → **SUBZONES**, or `/subzones options`. It has: show subzones, style (Lines only / Lines + tint / Tint only), subzone names, unexplored subzones, show on minimap, map button corner, line width, and tint opacity.
+- **Commands:** `/subzones` (or `/sz`) followed by `toggle`, `options`, `lines`, `both`, `tint`, `labels`, `unexplored`, `minimap`, `corner <tl|tr|bl|br>`, `alpha <0-1>`, `width <px>`, `blend` or `debug`.
 - **Minimap:** your current zone's subzone borders are drawn around you too. They're clipped to the minimap's round or square edge and turn with it when Rotate Minimap is on. The minimap only redraws when you move, turn or zoom. Turn it off with **Show on minimap**.
 
 ## Where the borders come from

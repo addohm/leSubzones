@@ -57,8 +57,8 @@ standing in. When you cross a SUBZONES line, your subzone changes.
   them.
 - Three styles: **Lines only** (the default), **Lines + tint**, or **Tint only**. Neighbouring
   subzones always get clearly different colors.
-- A **Subzones** checkbox at the bottom-left of the map turns it on and off. Right-click it for the
-  style, names, unexplored subzones and the options.
+- A **Subzones** checkbox in a corner of the map turns it on and off. It starts bottom-left and can
+  go in any corner. Right-click it for the style, names, unexplored subzones and the options.
 
 #### On the minimap
 
@@ -77,15 +77,16 @@ standing in. When you cross a SUBZONES line, your subzone changes.
 
 #### Make it yours
 
-- Style, subzone names, unexplored subzones, minimap borders, line width and tint opacity.
+- Style, subzone names, unexplored subzones, minimap borders, the map button's corner, line width
+  and tint opacity.
 - All in **Settings → AddOns → SUBZONES**, the right-click menu on the map checkbox, or by command.
 
 #### Commands
 
 - `/subzones`: turn the overlay on or off. `/subzones options`: the settings panel.
 - `/subzones lines`, `/subzones both`, `/subzones tint`: pick the style.
-- `/subzones labels`, `/subzones unexplored`, `/subzones minimap`, `/subzones alpha [0-1]`,
-  `/subzones width [px]`, `/subzones blend`
+- `/subzones labels`, `/subzones unexplored`, `/subzones minimap`,
+  `/subzones corner [tl|tr|bl|br]`, `/subzones alpha [0-1]`, `/subzones width [px]`, `/subzones blend`
 - `/subzones debug`: a short report to paste when something looks wrong. `/sz` works for all of
   them.
 

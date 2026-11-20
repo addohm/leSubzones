@@ -6,6 +6,10 @@ All notable changes to SubZones-WoW-Forever. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- The world map's **Subzones** checkbox can sit in any corner of the map (bottom-left by default). Pick it under **Map button** in the options panel, **Button position** in the right-click menu, or `/subzones corner <tl|tr|bl|br>`. On the right-hand corners the label sits to the left of the box.
+
 ## [1.0.0] - 2026-10-23
 
 First public release, for CurseForge and Wago.

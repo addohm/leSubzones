@@ -30,12 +30,18 @@ local LOWER_RIGHT = LOWER_RIGHT_VERTEX or 4
 local MODES = { lines = "Lines only", both = "Lines + tint", tint = "Tint only" }
 local MODE_ORDER = { "lines", "both", "tint" }
 
+-- Where the map checkbox sits; keys are anchor points on the map's scroll container.
+local CORNERS = { TOPLEFT = "Top left", TOPRIGHT = "Top right", BOTTOMLEFT = "Bottom left", BOTTOMRIGHT = "Bottom right" }
+local CORNER_ORDER = { "TOPLEFT", "TOPRIGHT", "BOTTOMLEFT", "BOTTOMRIGHT" }
+local CORNER_ALIASES = { tl = "TOPLEFT", tr = "TOPRIGHT", bl = "BOTTOMLEFT", br = "BOTTOMRIGHT" }
+
 local DEFAULTS = {
 	enabled = true,
 	mode = "lines",
 	labels = true,
 	unexplored = true,
 	minimap = true,
+	corner = "BOTTOMLEFT",
 	alpha = 0.35,
 	blend = "BLEND",
 	lineWidth = 1.5,
@@ -759,12 +765,31 @@ local function InstallMinimap()
 	minimapFrame:SetScript("OnUpdate", MinimapOnUpdate)
 end
 
+-- Pins the map checkbox to the chosen corner, with its label on the side
+-- facing the middle of the map so it never runs off the edge.
+local function PlaceToggle()
+	local check = SubzonesMapToggle
+	if not check then return end
+	local container = WorldMapFrame.ScrollContainer or WorldMapFrame
+	local corner = db.corner
+	local right = corner:find("RIGHT") ~= nil
+	check:ClearAllPoints()
+	check:SetPoint(corner, container, corner, right and -6 or 6, corner:find("TOP") and -6 or 6)
+	check.label:ClearAllPoints()
+	if right then
+		check.label:SetPoint("RIGHT", check, "LEFT", 0, 1)
+	else
+		check.label:SetPoint("LEFT", check, "RIGHT", 0, 1)
+	end
+end
+
 local function Refresh()
 	if overlay and WorldMapFrame:IsShown() then
 		DrawOverlay()
 	end
 	if SubzonesMapToggle then
 		SubzonesMapToggle:SetChecked(db.enabled)
+		PlaceToggle()
 	end
 	RequestMinimapRedraw()
 end
@@ -806,6 +831,14 @@ local function RegisterSettings()
 		"Also show subzones you haven't discovered yet (gray names, fainter fills).")
 	Settings.CreateCheckbox(category, setting("minimap", "boolean", "Show on minimap"),
 		"Draw your current zone's subzone borders on the minimap too.")
+
+	local function corners()
+		local container = Settings.CreateControlTextContainer()
+		for _, corner in ipairs(CORNER_ORDER) do container:Add(corner, CORNERS[corner]) end
+		return container:GetData()
+	end
+	Settings.CreateDropdown(category, setting("corner", "string", "Map button"), corners,
+		"Which corner of the world map the Subzones checkbox sits in.")
 
 	local function slider(key, label, min, max, step, formatter, tooltip)
 		local options = Settings.CreateSliderOptions(min, max, step)
@@ -863,6 +896,13 @@ local function ShowOptionsMenu(owner)
 			db.minimap = not db.minimap
 			Refresh()
 		end)
+		local position = root:CreateButton("Button position")
+		for _, corner in ipairs(CORNER_ORDER) do
+			position:CreateRadio(CORNERS[corner], function() return db.corner == corner end, function()
+				db.corner = corner
+				Refresh()
+			end)
+		end
 		root:CreateDivider()
 		root:CreateButton("Options...", OpenSettings)
 	end)
@@ -872,13 +912,12 @@ local function CreateToggle()
 	local container = WorldMapFrame.ScrollContainer or WorldMapFrame
 	local check = CreateFrame("CheckButton", "SubzonesMapToggle", WorldMapFrame, "UICheckButtonTemplate")
 	check:SetSize(24, 24)
-	check:SetPoint("BOTTOMLEFT", container, "BOTTOMLEFT", 6, 6)
 	check:SetFrameLevel(container:GetFrameLevel() + 2000)
 	check:SetChecked(db.enabled)
 
-	local text = check:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-	text:SetPoint("LEFT", check, "RIGHT", 0, 1)
-	text:SetText("Subzones")
+	check.label = check:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+	check.label:SetText("Subzones")
+	PlaceToggle()
 
 	check:RegisterForClicks("LeftButtonUp", "RightButtonUp")
 	check:SetScript("OnClick", function(self, button)
@@ -891,7 +930,7 @@ local function CreateToggle()
 		Refresh()
 	end)
 	check:SetScript("OnEnter", function(self)
-		GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+		GameTooltip:SetOwner(self, db.corner:find("RIGHT") and "ANCHOR_LEFT" or "ANCHOR_RIGHT")
 		GameTooltip:SetText(TITLE)
 		GameTooltip:AddLine("Style: " .. MODES[db.mode], 1, 1, 1)
 		GameTooltip:AddLine("Right-click for options, /subzones help for commands", 0.7, 0.7, 0.7)
@@ -974,6 +1013,14 @@ local function HandleSlash(msg)
 		Toggle("unexplored", "unexplored subzones")
 	elseif cmd == "minimap" then
 		Toggle("minimap", "minimap borders")
+	elseif cmd == "corner" then
+		local corner = CORNER_ALIASES[arg or ""] or (arg and CORNERS[arg:upper()] and arg:upper())
+		if corner then
+			db.corner = corner
+			Print("map button", CORNERS[corner]:lower())
+		else
+			Print("usage: /subzones corner <tl|tr|bl|br>")
+		end
 	elseif cmd == "alpha" or cmd == "width" then
 		local value = tonumber(arg)
 		local max = cmd == "alpha" and 1 or 10
@@ -993,7 +1040,7 @@ local function HandleSlash(msg)
 		PrintDebug()
 		return
 	else
-		Print("/subzones [toggle] | options | lines | both | tint | labels | unexplored | minimap | alpha <0-1> | width <px> | blend | debug")
+		Print("/subzones [toggle] | options | lines | both | tint | labels | unexplored | minimap | corner <tl|tr|bl|br> | alpha <0-1> | width <px> | blend | debug")
 		return
 	end
 	Refresh()
@@ -1019,6 +1066,7 @@ events:SetScript("OnEvent", function(_, event, arg1)
 			end
 		end
 		if not MODES[db.mode] then db.mode = DEFAULTS.mode end
+		if not CORNERS[db.corner] then db.corner = DEFAULTS.corner end
 		local ok, err = pcall(RegisterSettings)
 		if not ok then Print("couldn't add the options panel:", err) end
 	elseif event == "ADDON_LOADED" and arg1 == "Blizzard_WorldMap" then
