@@ -63,7 +63,9 @@ standing in. When you cross a SUBZONES line, your subzone changes.
 #### On the minimap
 
 - Your current zone's subzone borders, drawn around you as you move.
-- Clipped to a round or square minimap, and turning with **Rotate Minimap**.
+- Clipped to a round or square minimap, and turning with **Rotate Minimap**. The shape is detected
+  automatically, or you can set it.
+- Adjustable range: borders across the whole minimap, or only close around you.
 - Redraws only when you move, turn or zoom.
 
 #### From the game's own terrain
@@ -77,7 +79,7 @@ standing in. When you cross a SUBZONES line, your subzone changes.
 
 #### Make it yours
 
-- Style, subzone names, unexplored subzones, minimap borders, the map button's corner, line width
+- Style, subzone names, unexplored subzones, minimap borders, minimap shape and range, the map button's corner, line width
   and tint opacity.
 - All in **Settings → AddOns → SUBZONES**, the right-click menu on the map checkbox, or by command.
 
@@ -86,7 +88,7 @@ standing in. When you cross a SUBZONES line, your subzone changes.
 - `/subzones`: turn the overlay on or off. `/subzones options`: the settings panel.
 - `/subzones lines`, `/subzones both`, `/subzones tint`: pick the style.
 - `/subzones labels`, `/subzones unexplored`, `/subzones minimap`,
-  `/subzones corner [tl|tr|bl|br]`, `/subzones alpha [0-1]`, `/subzones width [px]`, `/subzones blend`
+  `/subzones shape [auto|round|square]`, `/subzones range [25-100]`, `/subzones corner [tl|tr|bl|br]`, `/subzones alpha [0-1]`, `/subzones width [px]`, `/subzones blend`
 - `/subzones debug`: a short report to paste when something looks wrong. `/sz` works for all of
   them.
 

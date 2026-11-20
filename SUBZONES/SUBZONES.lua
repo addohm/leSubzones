@@ -35,12 +35,20 @@ local CORNERS = { TOPLEFT = "Top left", TOPRIGHT = "Top right", BOTTOMLEFT = "Bo
 local CORNER_ORDER = { "TOPLEFT", "TOPRIGHT", "BOTTOMLEFT", "BOTTOMRIGHT" }
 local CORNER_ALIASES = { tl = "TOPLEFT", tr = "TOPRIGHT", bl = "BOTTOMLEFT", br = "BOTTOMRIGHT" }
 
+-- Minimap clip shape. "auto" asks GetMinimapShape(), which only minimap addons
+-- define; UIs that square the minimap without it need the override.
+local SHAPES = { auto = "Auto", round = "Round", square = "Square" }
+local SHAPE_ORDER = { "auto", "round", "square" }
+local RANGE_STEPS = { 0.25, 0.5, 0.75, 1 } -- right-click menu presets
+
 local DEFAULTS = {
 	enabled = true,
 	mode = "lines",
 	labels = true,
 	unexplored = true,
 	minimap = true,
+	minimapShape = "auto",
+	minimapRange = 1, -- fraction of the minimap's radius that gets borders
 	corner = "BOTTOMLEFT",
 	alpha = 0.35,
 	blend = "BLEND",
@@ -681,10 +689,13 @@ local function MinimapView()
 	local zoom = Minimap:GetZoom() or 0
 	local sizes = IsIndoors and IsIndoors() and MINIMAP_DIAMETER.indoor or MINIMAP_DIAMETER.outdoor
 	local facing = GetCVar("rotateMinimap") == "1" and GetPlayerFacing and GetPlayerFacing() or 0
-	local shape = GetMinimapShape and GetMinimapShape() or "ROUND"
+	local square = db.minimapShape == "square"
+	if db.minimapShape == "auto" then
+		square = GetMinimapShape and GetMinimapShape() == "SQUARE" or false
+	end
 	return {
 		context = context, x = world.x, y = world.y, facing = facing or 0,
-		diameter = sizes[zoom] or sizes[0], width = Minimap:GetWidth(), square = shape == "SQUARE",
+		diameter = sizes[zoom] or sizes[0], width = Minimap:GetWidth(), square = square,
 	}
 end
 
@@ -694,8 +705,8 @@ local function DrawMinimap(view)
 	local continent, context = view.context.continent, view.context
 	local byArea, bounds = LinesByArea(continent), LineBounds(continent)
 	local scale = view.width / view.diameter -- pixels per yard
-	local edge = view.width / 2 - MINIMAP_EDGE_INSET
-	local reach = view.diameter * 0.75 -- yards; covers a square minimap's corners
+	local edge = (view.width / 2 - MINIMAP_EDGE_INSET) * db.minimapRange
+	local reach = view.diameter * 0.75 * db.minimapRange -- yards; covers a square minimap's corners
 	local px, py = view.x, view.y
 	local cos, sin = math.cos(-view.facing), math.sin(-view.facing)
 	local clip = view.square and ClipSquare or ClipRound
@@ -732,7 +743,7 @@ local function RequestMinimapRedraw()
 	wipe(minimapLast)
 end
 
--- Redraws only when position, facing, zoom, size or zone changed.
+-- Redraws only when position, facing, zoom, size, shape or zone changed.
 local function MinimapOnUpdate(_, elapsed)
 	minimapElapsed = minimapElapsed + elapsed
 	if minimapElapsed < MINIMAP_INTERVAL then return end
@@ -741,11 +752,12 @@ local function MinimapOnUpdate(_, elapsed)
 	local last = minimapLast
 	if view then
 		if last.x and last.context == view.context and last.diameter == view.diameter and last.width == view.width
+			and last.square == view.square
 			and math.abs(last.x - view.x) < 0.05 and math.abs(last.y - view.y) < 0.05
 			and math.abs(last.facing - view.facing) < 0.002 then
 			return
 		end
-		last.context, last.diameter, last.width = view.context, view.diameter, view.width
+		last.context, last.diameter, last.width, last.square = view.context, view.diameter, view.width, view.square
 		last.x, last.y, last.facing = view.x, view.y, view.facing
 	elseif last.empty then
 		return
@@ -832,6 +844,14 @@ local function RegisterSettings()
 	Settings.CreateCheckbox(category, setting("minimap", "boolean", "Show on minimap"),
 		"Draw your current zone's subzone borders on the minimap too.")
 
+	local function shapes()
+		local container = Settings.CreateControlTextContainer()
+		for _, shape in ipairs(SHAPE_ORDER) do container:Add(shape, SHAPES[shape]) end
+		return container:GetData()
+	end
+	Settings.CreateDropdown(category, setting("minimapShape", "string", "Minimap shape"), shapes,
+		"Where minimap borders are cut off. Auto asks your minimap addon; pick Square if the corners of a square minimap stay empty.")
+
 	local function corners()
 		local container = Settings.CreateControlTextContainer()
 		for _, corner in ipairs(CORNER_ORDER) do container:Add(corner, CORNERS[corner]) end
@@ -849,6 +869,8 @@ local function RegisterSettings()
 		"Border line width on screen.")
 	slider("alpha", "Tint opacity", 0.05, 1, 0.05, function(v) return ("%d%%"):format(v * 100 + 0.5) end,
 		"How strong the color fills are.")
+	slider("minimapRange", "Minimap range", 0.25, 1, 0.05, function(v) return ("%d%%"):format(v * 100 + 0.5) end,
+		"How far from you borders are drawn on the minimap, as a share of its radius. Zoom the minimap out to see further.")
 
 	Settings.RegisterAddOnCategory(category)
 	settingsCategory = category
@@ -896,6 +918,21 @@ local function ShowOptionsMenu(owner)
 			db.minimap = not db.minimap
 			Refresh()
 		end)
+		local shape = root:CreateButton("Minimap shape")
+		for _, key in ipairs(SHAPE_ORDER) do
+			shape:CreateRadio(SHAPES[key], function() return db.minimapShape == key end, function()
+				db.minimapShape = key
+				Refresh()
+			end)
+		end
+		local range = root:CreateButton("Minimap range")
+		for _, step in ipairs(RANGE_STEPS) do
+			range:CreateRadio(("%d%%"):format(step * 100), function() return math.abs(db.minimapRange - step) < 0.001 end,
+				function()
+					db.minimapRange = step
+					Refresh()
+				end)
+		end
 		local position = root:CreateButton("Button position")
 		for _, corner in ipairs(CORNER_ORDER) do
 			position:CreateRadio(CORNERS[corner], function() return db.corner == corner end, function()
@@ -1013,6 +1050,21 @@ local function HandleSlash(msg)
 		Toggle("unexplored", "unexplored subzones")
 	elseif cmd == "minimap" then
 		Toggle("minimap", "minimap borders")
+	elseif cmd == "shape" then
+		if SHAPES[arg or ""] then
+			db.minimapShape = arg
+			Print("minimap shape", SHAPES[arg]:lower())
+		else
+			Print("usage: /subzones shape <auto|round|square>")
+		end
+	elseif cmd == "range" then
+		local value = tonumber(arg)
+		if value and value >= 25 and value <= 100 then
+			db.minimapRange = value / 100
+			Print(("minimap range %d%%"):format(value))
+		else
+			Print("usage: /subzones range <25-100>")
+		end
 	elseif cmd == "corner" then
 		local corner = CORNER_ALIASES[arg or ""] or (arg and CORNERS[arg:upper()] and arg:upper())
 		if corner then
@@ -1040,7 +1092,7 @@ local function HandleSlash(msg)
 		PrintDebug()
 		return
 	else
-		Print("/subzones [toggle] | options | lines | both | tint | labels | unexplored | minimap | corner <tl|tr|bl|br> | alpha <0-1> | width <px> | blend | debug")
+		Print("/subzones [toggle] | options | lines | both | tint | labels | unexplored | minimap | shape <auto|round|square> | range <25-100> | corner <tl|tr|bl|br> | alpha <0-1> | width <px> | blend | debug")
 		return
 	end
 	Refresh()
@@ -1067,6 +1119,10 @@ events:SetScript("OnEvent", function(_, event, arg1)
 		end
 		if not MODES[db.mode] then db.mode = DEFAULTS.mode end
 		if not CORNERS[db.corner] then db.corner = DEFAULTS.corner end
+		if not SHAPES[db.minimapShape] then db.minimapShape = DEFAULTS.minimapShape end
+		if type(db.minimapRange) ~= "number" or db.minimapRange < 0.25 or db.minimapRange > 1 then
+			db.minimapRange = DEFAULTS.minimapRange
+		end
 		local ok, err = pcall(RegisterSettings)
 		if not ok then Print("couldn't add the options panel:", err) end
 	elseif event == "ADDON_LOADED" and arg1 == "Blizzard_WorldMap" then
