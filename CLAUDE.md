@@ -1,6 +1,6 @@
 # SUBZONES
 
-WoW addon for **WoW Forever** (client "Camelot", product `wow_classic_beta`, TOC `16001`, modern Midnight-style API) that draws subzone borders, names and optional color fills on the world map and minimap. Borders come from the game's own terrain files, extracted offline by the Python tools. See `README.md` for user-facing docs.
+WoW addon for **WoW Forever** (client "Camelot", product `wowf` (live; the beta is `wow_classic_beta`), TOC `16001`, modern Midnight-style API) that draws subzone borders, names and optional color fills on the world map and minimap. Borders come from the game's own terrain files, extracted offline by the Python tools. See `README.md` for user-facing docs.
 
 ## Layout
 
