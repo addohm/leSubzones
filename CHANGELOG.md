@@ -16,6 +16,7 @@ All notable changes to leSubzones. The format follows
 
 ### Changed
 
+- Border data re-extracted from the live WoW: Forever client (`wowf` 1.60.1.70959). The terrain is unchanged from the beta build it came from (1.60.1.70334): every chunk on all three continents matches, so only the build label changes.
 - The addon is now **leSubZones** (was SUBZONES): its folder, TOC, title, options panel and chat name. `/subzones` and `/sz` stay. Saved settings live in a file named after the addon folder, so they start from the defaults once. `tools\install_forever.cmd` removes the old `SUBZONES` folder from AddOns, so the two don't both load.
 - The repository is now [addohm/leSubzones](https://github.com/addohm/leSubzones) (renamed from SubZones-WoW-Forever; old links redirect).
 - `extract_game.py` picks the installed product itself: `wowf` (live WoW: Forever) first, then `wow_classic_beta`. New `tools/extract_forever.cmd` runs it on the Windows PC with the game and pushes only `tools/data/game_areas.json`, so the borders can be rebuilt from it here.
